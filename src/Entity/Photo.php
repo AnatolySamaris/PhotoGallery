@@ -28,7 +28,7 @@ class Photo
     #[ORM\JoinColumn(nullable: false)]
     private ?User $author = null;
 
-    #[ORM\ManyToMany(targetEntity: Rating::class, mappedBy: 'photo')]
+    #[ORM\OneToMany(targetEntity: Rating::class, mappedBy: 'photo')]
     private Collection $ratings;
 
     public function __construct()
@@ -101,7 +101,7 @@ class Photo
     {
         if (!$this->ratings->contains($rating)) {
             $this->ratings->add($rating);
-            $rating->addPhoto($this);
+            $rating->setPhoto($this);
         }
 
         return $this;
@@ -110,9 +110,17 @@ class Photo
     public function removeRating(Rating $rating): static
     {
         if ($this->ratings->removeElement($rating)) {
-            $rating->removePhoto($this);
+            // set the owning side to null (unless already changed)
+            if ($rating->getPhoto() === $this) {
+                $rating->setPhoto(null);
+            }
         }
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->title;
     }
 }

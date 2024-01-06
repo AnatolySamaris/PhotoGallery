@@ -31,7 +31,7 @@ class User
     #[ORM\OneToMany(mappedBy: 'author', targetEntity: Photo::class, orphanRemoval: true)]
     private Collection $photos;
 
-    #[ORM\ManyToMany(targetEntity: Rating::class, mappedBy: 'rater')]
+    #[ORM\OneToMany(mappedBy: 'rater', targetEntity: Rating::class, orphanRemoval: true)]
     private Collection $ratings;
 
     public function __construct()
@@ -135,7 +135,7 @@ class User
     {
         if (!$this->ratings->contains($rating)) {
             $this->ratings->add($rating);
-            $rating->addRater($this);
+            $rating->setRater($this);
         }
 
         return $this;
@@ -144,9 +144,17 @@ class User
     public function removeRating(Rating $rating): static
     {
         if ($this->ratings->removeElement($rating)) {
-            $rating->removeRater($this);
+            // set the owning side to null (unless already changed)
+            if ($rating->getRater() === $this) {
+                $rating->setRater(null);
+            }
         }
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->name;
     }
 }
